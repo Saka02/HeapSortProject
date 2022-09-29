@@ -48,9 +48,6 @@ namespace HeapSortProject
                 temp.TextAlignment = TextAlignment.Center;
                 temp.Margin = new Thickness(5);
                 temp.Foreground = Brushes.White;
-                
-                
-                
             }
             else
             {
@@ -99,6 +96,11 @@ namespace HeapSortProject
 
         }
         private void SortClick(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        private void SearchClick(object sender, RoutedEventArgs e)
         {
 
         }
