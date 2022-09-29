@@ -1,0 +1,32 @@
+﻿<Window x:Class="HeapSortProject.ChooseLang"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:HeapSortProject"
+        mc:Ignorable="d"
+        Title="ChooseLang" Height="500" Width="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Button Click="RSClick" Grid.Column="0" Background="LightGray">
+            <Grid>
+
+                <Image Source="flags/RS.png" Height="188" Width="245" Stretch="Fill"/>
+                <TextBlock Text="Srpski" FontSize="50" Margin="37,188,57,-75" FontWeight="Bold"  />
+            </Grid>
+
+        </Button>
+        <Button Click="UKClick" Grid.Column="1"  Background="LightGray">
+            <Grid>
+                <Image Source="flags/UK.png" Height="188" Width="244" Stretch="Fill"/>
+                <TextBlock Text="English" FontSize="50" FontWeight="Bold" Margin="34,188,-34,-188"/>
+
+            </Grid>
+            
+            
+        </Button>
+    </Grid>
+</Window>
