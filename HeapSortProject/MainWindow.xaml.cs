@@ -1,18 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace HeapSortProject
 {
@@ -21,17 +14,23 @@ namespace HeapSortProject
     /// </summary>
     public partial class MainWindow : Window
     {
+        string path = "C:\\Users\\Samir123\\Desktop\\HeapSortProject\\HeapSortProject\\"; 
+        SqlConnector SqlConnector;
         List<TextBlock> elementi = new List<TextBlock>();
+        string arrayName;
+        string time; 
+        List<string> nizoviIzBaze = new List<string>(); 
         List<int> logicList = new List<int>();
         int execTimeMS = 0;
+        
         public MainWindow()
         {
+            SqlConnector = new SqlConnector(path);
             InitializeComponent();
+            LoadArrayNames();
+            cbNizovi.ItemsSource = nizoviIzBaze;
+            // ovde nizoviIzBaze popuni imenima svih nizova sta imas u bazi posle listu povezi na dropbox il kako vec se zove, za populaciju ove liste ima sql komanda u sqlconnector <------------------------------------------
         }
-        /// <summary> ///
-        /// 
-        /// </summary>
-        /// <para
         void clearBlocks()
         {
             foreach (TextBlock item in PanelS.Children)
@@ -62,7 +61,8 @@ namespace HeapSortProject
         private void AddClick(object sender, RoutedEventArgs e)
         {
             int num = 0;
-            if(int.TryParse(MainIn.Text, out num)){
+            if (int.TryParse(MainIn.Text, out num))
+            {
                 AddNew(num);
             }
             else
@@ -94,12 +94,83 @@ namespace HeapSortProject
 
         private void SaveClick(object sender, RoutedEventArgs e)
         {
+            if(Status.Text == "Status: STANDBY")
+            {
+                string nodeString = "";
+                time = execTimeMS.ToString();
+                arrayName = tbImeNiza.Text;// ovde dodeli teksst iz textboxa za ime <------------------------------------------
+                if (nizoviIzBaze.Contains(arrayName) && MessageBox.Show($"Are you sure you want to update the graph: {arrayName}", "Graph Update", MessageBoxButton.YesNo) == MessageBoxResult.Yes) // promeni tekst ove poruke pls <------------------------------------------------------------
+                {
+                    foreach (int n in logicList)
+                    {
+                        nodeString += n.ToString() + ",";
+                    }
 
+                    SqlConnector.Edit(nodeString, arrayName, time);
+                }
+                else if (arrayName != "" && elementi.Count > 0)
+                {
+                    foreach (int n in logicList)
+                    {
+                        nodeString += n.ToString() + ",";
+                    }
+                    SqlConnector.Write(nodeString, arrayName, time);
+                    nizoviIzBaze.Clear();
+                    LoadArrayNames();
+                    cbNizovi.ItemsSource = null;
+                    cbNizovi.ItemsSource = nizoviIzBaze;
+                }
+            }
+        }
+
+        private void LoadArrayNames()
+        {
+            nizoviIzBaze.Clear();
+            DataTable dt = SqlConnector.ReadArrays();
+
+            foreach (DataRow dr in dt.Rows)
+            {
+                nizoviIzBaze.Add(dr["ArrayName"].ToString());
+            }
         }
 
         private void LoadClick(object sender, RoutedEventArgs e)
         {
+            // kad ovo kliknes ovaj brat ucita iz sql string ime iza baze i stavi u textbox, a posle uscita niz noda npr 1,2,4,54,57, i posle taj string .split() i doda u ovu logicList, i vidi kako ces posel ovu elementi listu popunit <------------------------------------------
+            
+            if(cbNizovi.SelectedItem != null)
+            {
+                string selected = cbNizovi.SelectedItem.ToString();
+                arrayName = selected;
+                tbImeNiza.Text = selected;
 
+                DataTable dt = SqlConnector.ReadArrayElements(selected);
+
+                string ele = null;
+
+                foreach (DataRow dr in dt.Rows)
+                {
+                    ele = dr["Nodes"].ToString();
+                }
+
+                string[] Nodes = ele.Split(',');
+                Nodes = Nodes.Reverse().Skip(1).Reverse().ToArray();
+               
+                foreach(TextBlock Node in elementi.ToList())
+                {
+                    TextBlock temp = elementi.Where(item => item.Text == Node.Text).FirstOrDefault();
+                    PanelS.Children.Remove(temp);
+                    elementi.Remove(temp);
+                    logicList.Remove(int.Parse(temp.Text));
+                }
+
+                foreach(string Node in Nodes)
+                {
+                    AddNew(int.Parse(Node));
+                }
+
+            }
+            
         }
         private void InfoClick(object sender, RoutedEventArgs e)
         {
@@ -119,36 +190,36 @@ namespace HeapSortProject
 
         async Task hipify(int INX)
         {
-            int left= INX*2+1;
-            int right= INX*2+2;
-            int largest= INX;
+            int left = INX * 2 + 1;
+            int right = INX * 2 + 2;
+            int largest = INX;
             await Task.Delay(1000);
             execTimeMS -= 1000;
             clearBlocks();
             //Postavljanje boje trenutnom itemu
             if (INX > 0)
-            ((TextBlock)PanelS.Children[INX]).Background = Brushes.Yellow;
+                ((TextBlock)PanelS.Children[INX]).Background = Brushes.Yellow;
 
             if (left < logicList.Count)
             {
-                if(logicList[left] > logicList[largest])
-                largest = left;
+                if (logicList[left] > logicList[largest])
+                    largest = left;
                 await Task.Delay(1000);
                 execTimeMS -= 1000;
-                ((TextBlock)PanelS.Children[left]).Background= Brushes.Yellow;
+                ((TextBlock)PanelS.Children[left]).Background = Brushes.Yellow;
             }
 
-            if (right<logicList.Count)
+            if (right < logicList.Count)
             {
                 await Task.Delay(1000);
                 execTimeMS -= 1000;
                 ((TextBlock)PanelS.Children[right]).Background = Brushes.Yellow;
                 if (logicList[right] > logicList[largest])
-                largest = right;
+                    largest = right;
             }
 
-            if(largest!= INX)
-            {   
+            if (largest != INX)
+            {
                 //Postavljanje sa cime treba da se zameni u crveno
                 await Task.Delay(1000);
                 execTimeMS -= 1000;
@@ -172,7 +243,7 @@ namespace HeapSortProject
         async Task buildHeap()
         {
             Status.Text = "Status: BUILDING HEAP";
-            for(int i=logicList.Count/2-1; i>=0; i--)
+            for (int i = logicList.Count / 2 - 1; i >= 0; i--)
             {
                 await hipify(i);
             }
@@ -192,7 +263,7 @@ namespace HeapSortProject
                 helper.Add(logicList.First());
                 int temp = logicList.First();
                 logicList[0] = logicList.Last();
-                logicList[logicList.Count-1] = temp;
+                logicList[logicList.Count - 1] = temp;
                 logicList.Remove(logicList.Last());
 
                 tempBlock.Width = 50;
@@ -214,18 +285,19 @@ namespace HeapSortProject
                 Sorted.Children.Add(tempBlock);
                 await Task.Delay(1000);
                 execTimeMS -= 1000;
-                ((TextBlock)PanelS.Children[0]).Text= " ";
+                ((TextBlock)PanelS.Children[0]).Text = " ";
                 await Task.Delay(1000);
                 execTimeMS -= 1000;
-                ((TextBlock)PanelS.Children[0]).Text = ((TextBlock)PanelS.Children[PanelS.Children.Count-1]).Text;
-                PanelS.Children.Remove(PanelS.Children[PanelS.Children.Count-1]);
-                if(PanelS.Children.Count>0)
-                Status.Text = $"Status: HEAPIFYING {((TextBlock)PanelS.Children[0]).Text}";
-                await hipify(0);            
+                ((TextBlock)PanelS.Children[0]).Text = ((TextBlock)PanelS.Children[PanelS.Children.Count - 1]).Text;
+                PanelS.Children.Remove(PanelS.Children[PanelS.Children.Count - 1]);
+                if (PanelS.Children.Count > 0)
+                    Status.Text = $"Status: HEAPIFYING {((TextBlock)PanelS.Children[0]).Text}";
+                await hipify(0);
             }
 
             //Converting sorted back to main panel
-            for(int i=0; i< helper.Count; i++) {
+            for (int i = 0; i < helper.Count; i++)
+            {
                 await Task.Delay(1000);
                 execTimeMS -= 1000;
                 clearBlocks();
@@ -238,6 +310,30 @@ namespace HeapSortProject
             }
 
             logicList = helper;
+        }
+
+        private void DeleteClick(object sender, RoutedEventArgs e)
+        {
+            arrayName = tbImeNiza.Text;
+            if (nizoviIzBaze.Contains(arrayName) && MessageBox.Show($"Are you sure you want to delete the graph: {arrayName}", "Graph Deletion", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {
+                SqlConnector.Delete(arrayName);
+
+                LoadArrayNames();
+
+                cbNizovi.ItemsSource = null;
+                cbNizovi.ItemsSource = nizoviIzBaze;
+
+                foreach (TextBlock Node in elementi.ToList())
+                {
+                    TextBlock temp = elementi.Where(item => item.Text == Node.Text).FirstOrDefault();
+                    PanelS.Children.Remove(temp);
+                    elementi.Remove(temp);
+                    logicList.Remove(int.Parse(temp.Text));
+                }
+
+                tbImeNiza.Text = "";
+            }
         }
     }
 }
